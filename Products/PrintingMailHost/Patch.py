@@ -4,8 +4,11 @@ from AccessControl import ClassSecurityInfo
 from email.message import Message
 from Products.MailHost.MailHost import MailBase
 from Products.PrintingMailHost import FIXED_ADDRESS
+from Products.PrintingMailHost import SMTP_HOST
+from Products.PrintingMailHost import SMTP_PORT
 from Products.PrintingMailHost import LOG
 from six import StringIO
+from zope.sendmail.mailer import SMTPMailer
 
 import six
 
@@ -99,7 +102,13 @@ class PrintingMailHost:
             print(base64_note, file=out)
             print("", file=out)
         LOG.info(out.getvalue())
-        if FIXED_ADDRESS:
+        if SMTP_HOST and SMTP_PORT:
+            # Send a real email to the given smtp host and port immediately.
+            mailer = self._makeMailer()
+            mailer.hostname = SMTP_HOST
+            mailer.port = int(SMTP_PORT)
+            mailer.send(mfrom, mto, orig_messageText)
+        elif FIXED_ADDRESS:
             # Send a real email to the given fixed address.
             orig_send = getattr(self, PATCH_PREFIX + "_send", None)
             if orig_send is not None:
@@ -118,7 +127,19 @@ Monkey patching MailHosts to print e-mails to the terminal.
 """
 
 
-if FIXED_ADDRESS:
+if SMTP_HOST and SMTP_PORT:
+    warning += (
+        """
+Also, ALL MAIL WILL BE SENT TO THE FOLLOWING MAIL SERVER: %s:%s
+
+Change PRINTING_MAILHOST_SMTP_HOST and PRINTING_MAILHOST_SMTP_PORT in the
+environment variables to change the host and port, or remove it to only
+print emails.
+"""
+        % (SMTP_HOST, SMTP_PORT)
+    )
+
+elif FIXED_ADDRESS:
     warning += (
         """
 Also, ALL MAIL WILL BE SENT TO ONE ADDRESS: %s

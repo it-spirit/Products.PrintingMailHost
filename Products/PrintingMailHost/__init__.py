@@ -17,11 +17,15 @@ def initialize(context):
     global LOG
     global FIXED_ADDRESS
     global ENABLED
+    global SMTP_HOST
+    global SMTP_PORT
     LOG = logging.getLogger("PrintingMailHost")
 
     ENABLED = os.environ.get("ENABLE_PRINTING_MAILHOST", None)
     addresses = os.environ.get("PRINTING_MAILHOST_FIXED_ADDRESS", "")
     FIXED_ADDRESS = [addr for addr in addresses.strip().split(" ") if addr]
+    SMTP_HOST = os.environ.get("PRINTING_MAILHOST_SMTP_HOST")
+    SMTP_PORT = os.environ.get("PRINTING_MAILHOST_SMTP_PORT")
 
     # check to see if the environment var is set to a 'true' value
     if (ENABLED is not None and ENABLED.lower() in TRUISMS) or (
